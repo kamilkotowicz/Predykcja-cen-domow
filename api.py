@@ -3,8 +3,8 @@ import uvicorn
 import sklearn
 import pandas as pd
 import numpy as np
-from pydantic import BaseModel
-from fastapi import FastAPI
+from pydantic import BaseModel, Field
+from fastapi import FastAPI, Body
 
 app = FastAPI(title='House Price Prediction', version='1.0',
               description='Linear Regression model is used for prediction')
@@ -14,32 +14,32 @@ model = pickle.load(open('model.pkl', 'rb'))
 
 class Data(BaseModel):
     # Order of features is important!!!
-    OverallQual: int
+    OverallQual: int = Field(ge=1, le=10)
     Neighborhood: str
-    GarageCars: int
-    GrLivArea: int
+    GarageCars: int = Field(ge=0, le=10)
+    GrLivArea: int = Field(ge=0, le=1e4)
     ExterQual: str
     KitchenQual: str
-    YearBuilt: int
-    TotalBsmtSF: int
+    YearBuilt: int = Field(ge=1600, le=2100)
+    TotalBsmtSF: int = Field(ge=0, le=1e4)
     GarageFinish: str
-    FullBath: int
-    FirstFlrSF: int
+    FullBath: int = Field(ge=0, le=10)
+    FirstFlrSF: int = Field(ge=0, le=1e4)
     FireplaceQu: str
-    YearRemodAdd: int
+    YearRemodAdd: int = Field(ge=1600, le=2100)
     Foundation: str
-    Fireplaces: int
+    Fireplaces: int = Field(ge=0, le=10)
     HeatingQC: str
     MSZoning: str
-    BsmtFinSF1: int
-    LotFrontage: int
+    BsmtFinSF1: int = Field(ge=0, le=1e4)
+    LotFrontage: int = Field(ge=0, le=1000)
     Exterior1st: str
     BsmtFinType1: str 
-    OverallCond: int
-    SecondFlrSF: int
-    LotArea: int
-    HalfBath: int
-    MasVnrArea: int
+    OverallCond: int = Field(ge=1, le=10)
+    SecondFlrSF: int = Field(ge=0, le=1e4)
+    LotArea: int = Field(ge=0, le=1e6)
+    HalfBath: int = Field(ge=0, le=10)
+    MasVnrArea: int = Field(ge=0, le=1e4)
     LotShape: str
     
 
@@ -85,7 +85,7 @@ def read_home():
 
 
 @app.post("/predict")
-def predict(data: Data):
+def predict(data: Data = Body()) -> int:
     # converting Data object to Dataframe
     dict = data.dict()
     print(dict)
@@ -97,7 +97,7 @@ def predict(data: Data):
     for col in df.columns:
         print({col:df[col]})
     # making predictions
-    result = np.expm1(model.predict(df)[0])
+    result = round(np.expm1(model.predict(df)[0]))
     return result
 
 if __name__ == '__main__':
